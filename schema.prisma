@@ -1,0 +1,32 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model MarketSnapshot {
+  id              String       @id @default(uuid())
+  createdAt       DateTime     @default(now())
+  targetModel     String
+  repairedValue   Int
+  targetPrice     Int
+  priceGap        Int
+  checkedListings Int
+  isHighAlert     Boolean
+  listings        CarListing[]
+}
+
+model CarListing {
+  id           String         @id @default(uuid())
+  snapshotId   String
+  snapshot     MarketSnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  createdAt    DateTime       @default(now())
+  title        String?
+  url          String?
+  price        Int
+  mileage      Int
+  hasSunroof   Boolean
+}
