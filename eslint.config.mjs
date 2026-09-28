@@ -7,6 +7,7 @@ export default tseslint.config(
   {
     ignores: [
       "dist/**",
+      ".wasp/**",
       "node_modules/**",
       "coverage/**",
       "playwright-report/**",
@@ -21,7 +22,9 @@ export default tseslint.config(
     languageOptions: {
       globals: globals.node,
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ["vite.config.ts"],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },

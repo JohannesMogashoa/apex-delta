@@ -1,4 +1,6 @@
 import { chromium } from "playwright";
+import { prisma } from "wasp/server";
+
 import { inngest } from "./client";
 import type { ArbitrageResult, CarListing } from "./types";
 
@@ -23,16 +25,12 @@ async function scrapeMarket(): Promise<CarListing[]> {
   const browser = await chromium.launch({ headless: true });
 
   try {
-    const page = await browser.newPage({
-      locale: "en-ZA",
-    });
+    const page = await browser.newPage({ locale: "en-ZA" });
     const searchUrl = `${MARKETPLACE_URL}?q=${encodeURIComponent(TARGET_MODEL)}`;
 
     await page.goto(searchUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
     await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => undefined);
 
-    // AutoTrader markup changes periodically. These broad selectors keep the
-    // skeleton useful while avoiding a dependency on a single CSS class name.
     const listingTexts = await page
       .locator("article, [data-testid*='listing'], [class*='listing']")
       .allTextContents();
@@ -64,11 +62,9 @@ export const checkMarketArbitrage = inngest.createFunction(
     id: "check-market-arbitrage",
     name: "Check vehicle market arbitrage",
   },
-  // Keep the market check aligned with the South African trading day.
-  { cron: "TZ=Africa/Johannesburg 0 8 * * *" },
+  [{ cron: "TZ=Africa/Johannesburg 0 8 * * *" }, { event: "apex-delta/market-check.requested" }],
   async ({ step }) => {
     const tradeIn = await step.run("fetch-trade-in", async () => {
-      // Placeholder until a valuation provider or source vehicle is connected.
       const marketAverage = Number(process.env.TRADE_IN_MARKET_AVERAGE_ZAR ?? 400_000);
       const repairedValue = marketAverage * 0.8;
 
@@ -78,7 +74,7 @@ export const checkMarketArbitrage = inngest.createFunction(
     const listings = await step.run("scrape-market", scrapeMarket);
     const targetListing = listings.sort((a, b) => a.price - b.price)[0] ?? null;
 
-    const result = await step.run("analyze-delta", (): ArbitrageResult => {
+    const result = await step.run("analyze-delta", async (): Promise<ArbitrageResult> => {
       const targetPrice = targetListing?.price ?? 0;
       const priceGap = targetPrice - tradeIn.repairedValue;
       const isHighAlert = targetListing !== null && priceGap < HIGH_ALERT_THRESHOLD_ZAR;
@@ -89,12 +85,32 @@ export const checkMarketArbitrage = inngest.createFunction(
         );
       }
 
+      const snapshot = await prisma.marketSnapshot.create({
+        data: {
+          targetModel: TARGET_MODEL,
+          repairedValue: tradeIn.repairedValue,
+          targetPrice,
+          priceGap,
+          checkedListings: listings.length,
+          isHighAlert,
+          listings: {
+            create: listings.map((listing) => ({
+              title: listing.title,
+              url: listing.url,
+              price: listing.price,
+              mileage: listing.mileage,
+              hasSunroof: listing.hasSunroof,
+            })),
+          },
+        },
+      });
+
       return {
-        repairedValue: tradeIn.repairedValue,
-        targetPrice,
-        priceGap,
+        repairedValue: snapshot.repairedValue,
+        targetPrice: snapshot.targetPrice,
+        priceGap: snapshot.priceGap,
         targetListing,
-        isHighAlert,
+        isHighAlert: snapshot.isHighAlert,
       };
     });
 

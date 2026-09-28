@@ -1,4 +1,5 @@
 node_modules/
+.wasp/
 dist/
 coverage/
 playwright-report/
@@ -6,3 +7,4 @@ test-results/
 blob-report/
 package-lock.json
 .git/
+.agents/
