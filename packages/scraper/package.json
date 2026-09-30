@@ -1,0 +1,25 @@
+{
+	"name": "@apex-delta/scraper",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./contracts": "./src/contracts/index.ts",
+		"./types": "./src/types/index.ts",
+		"./sources": "./src/sources/index.ts",
+		"./normalization": "./src/normalization/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit",
+		"test": "tsx --test src/**/*.test.ts"
+	},
+	"dependencies": {
+		"@apex-delta/domain": "workspace:*",
+		"zod": "^4.6.5"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.3",
+		"tsx": "^4.23.15",
+		"typescript": "^7.0.2"
+	}
+}
