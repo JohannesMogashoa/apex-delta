@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: apex-delta-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB=apex_delta
+      POSTGRES_USER=apex_delta_user
+      POSTGRES_PASSWORD=apex_delta_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - apex-delta-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U apex_delta_user -d apex_delta"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  inngest:
+    image: inngest/inngest:latest
+    container_name: apex-delta-inngest
+    restart: unless-stopped
+    command: ["inngest", "dev"]
+    ports:
+      - "8288:8288"
+      - "8289:8289"
+
+volumes:
+  apex-delta-postgres-data:
