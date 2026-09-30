@@ -12,10 +12,10 @@
     "infra:up": "docker compose -f docker-compose.dev.yml up -d",
     "infra:down": "docker compose -f docker-compose.dev.yml down",
     "infra:logs": "docker compose -f docker-compose.dev.yml logs -f",
-    "db:generate": "pnpm --filter @car-hunter/database db:generate",
-    "db:migrate": "pnpm --filter @car-hunter/database db:migrate",
-    "db:push": "pnpm --filter @car-hunter/database db:push",
-    "db:studio": "pnpm --filter @car-hunter/database db:studio"
+    "db:generate": "pnpm --filter @apex-delta/database db:generate",
+    "db:migrate": "pnpm --filter @apex-delta/database db:migrate",
+    "db:push": "pnpm --filter @apex-delta/database db:push",
+    "db:studio": "pnpm --filter @apex-delta/database db:studio"
   },
   "keywords": [],
   "author": "",
